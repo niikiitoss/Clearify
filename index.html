@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎭 Clearify - Rewrite Text for Better Understanding</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sora': ['Sora', 'sans-serif'],
+                        'inter': ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="config.js"></script>
+<style>
+.custom-select {
+    position: relative;
+}
+.custom-select::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: 16px;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: #6b7280;
+    font-size: 12px;
+}
+.dark .custom-select::after {
+    color: #9ca3af;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes slideInResult {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.animate-fadeInUp {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-pulse-hover:hover {
+    animation: pulse 0.3s ease-in-out;
+}
+
+.result-appear {
+    animation: slideInResult 0.8s ease-out;
+}
+
+.smooth-transition {
+    transition: all 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.dark .hover-lift:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.btn-glow:hover {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+}
+
+/* Custom Slider Styles */
+.slider-custom {
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+.slider-custom::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 24px;
+    width: 24px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #3b82f6;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.slider-custom::-webkit-slider-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.slider-custom::-moz-range-thumb {
+    height: 24px;
+    width: 24px;
+    border-radius: 50%;
+    background: #ffffff;
+    border: 3px solid #3b82f6;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+}
+
+.slider-custom::-moz-range-thumb:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.dark .slider-custom::-webkit-slider-thumb {
+    background: #1f2937;
+    border: 3px solid #3b82f6;
+}
+
+.dark .slider-custom::-moz-range-thumb {
+    background: #1f2937;
+    border: 3px solid #3b82f6;
+}
+
+/* Smooth text transitions */
+#difficultyText {
+    transition: opacity 0.15s ease-in-out;
+}
+
+/* Text Input Hover Glow Effect */
+#textInput {
+    border-radius: 12px;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 0 5px rgba(87,196,255,0.2);
+}
+
+#textInput:hover {
+    border-color: #57c4ff;
+    box-shadow: 0 0 10px rgba(87,196,255,0.4);
+}
+
+#textInput:focus {
+    border-color: #57c4ff;
+    box-shadow: 0 0 15px rgba(87,196,255,0.6);
+}
+
+/* Explain Button Glow Effect */
+.explain-btn-glow {
+    box-shadow: 0 4px 15px rgba(106, 90, 205, 0.3);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.explain-btn-glow:hover {
+    transform: translateY(-3px) scale(1.02);
+    background: linear-gradient(135deg, #9b59b6 0%, #6a5acd 100%) !important;
+    box-shadow: 0 0 8px rgba(155, 89, 182, 0.5), 0 8px 25px rgba(106, 90, 205, 0.4);
+}
+
+/* Button state when text is entered */
+.explain-btn-active {
+    transform: scale(1.05);
+    animation: gentlePulse 2s ease-in-out infinite;
+}
+
+@keyframes gentlePulse {
+    0%, 100% {
+        transform: scale(1.05);
+        box-shadow: 0 4px 15px rgba(106, 90, 205, 0.3);
+    }
+    50% {
+        transform: scale(1.08);
+        box-shadow: 0 6px 20px rgba(106, 90, 205, 0.5);
+    }
+}
+
+/* Hover effct for active butcon */
+.explain-btn-active:hover {
+    transform: translateY(-3px) scale(1.08);
+    background: linear-gradient(135deg, #9b59b6 0%, #6a5acd 100%) !important;
+    box-shadow: 0 0 12px rgba(155, 89, 182, 0.7), 0 10px 30px rgba(106, 90, 205, 0.5);
+    animation: none;
+}
+
+/* Animated Background Gradient */
+body {
+    background: linear-gradient(-45deg, #1a1a2e, #2e2e52, #26154f, #1a1a2e, #2e2e52);
+    background-size: 400% 400%;
+    animation: gradientShift 25s ease infinite;
+    position: relative;
+    overflow-x: hidden;
+}
+
+@keyframes gradientShift {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+/* Abstract Pattern Overlay */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.04;
+    z-index: -1;
+    background-image: 
+        radial-gradient(circle at 25% 25%, rgba(255,255,255,0.1) 1px, transparent 1px),
+        radial-gradient(circle at 75% 75%, rgba(255,255,255,0.1) 1px, transparent 1px),
+        linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.05) 50%, transparent 60%),
+        linear-gradient(-45deg, transparent 40%, rgba(255,255,255,0.05) 50%, transparent 60%);
+    background-size: 60px 60px, 80px 80px, 40px 40px, 40px 40px;
+    background-position: 0 0, 30px 30px, 0 0, 20px 20px;
+    animation: patternMove 30s linear infinite;
+}
+
+@keyframes patternMove {
+    0% {
+        background-position: 0 0, 30px 30px, 0 0, 20px 20px;
+    }
+    100% {
+        background-position: 60px 60px, 90px 90px, 40px 40px, 60px 60px;
+    }
+}
+
+/* Subtle Stars Pattern */
+body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.03;
+    z-index: -1;
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.2) 1px, transparent 2px),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.2) 1px, transparent 2px),
+        radial-gradient(circle at 40% 40%, rgba(255,255,255,0.15) 0.5px, transparent 1px),
+        radial-gradient(circle at 60% 60%, rgba(255,255,255,0.15) 0.5px, transparent 1px);
+    background-size: 200px 200px, 150px 150px, 100px 100px, 120px 120px;
+    animation: starsMove 40s linear infinite;
+}
+
+@keyframes starsMove {
+    0% {
+        transform: translateX(0) translateY(0);
+    }
+    100% {
+        transform: translateX(-50px) translateY(-30px);
+    }
+}
+
+/* Enhanced Persona Cards Styling - Visually Polished */
+.persona-card {
+    background: rgba(30, 30, 60, 0.6);
+    backdrop-filter: blur(6px);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+    min-height: 160px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.persona-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(147, 51, 234, 0.1) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 16px;
+}
+
+.persona-card:hover {
+    transform: scale(1.03) translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), 0 0 0 2px #57c4ff;
+    border-color: #57c4ff;
+}
+
+.persona-card:hover::before {
+    opacity: 1;
+}
+
+.persona-card.selected {
+    border-color: #57c4ff;
+    box-shadow: 0 0 0 3px rgba(87, 196, 255, 0.4), 0 8px 25px rgba(0, 0, 0, 0.5);
+    transform: scale(1.02) translateY(-1px);
+    background: rgba(40, 40, 80, 0.8);
+}
+
+.persona-card.selected::before {
+    opacity: 1;
+    background: linear-gradient(135deg, rgba(87, 196, 255, 0.2) 0%, rgba(59, 130, 246, 0.2) 100%);
+}
+
+.persona-card-custom {
+    background: rgba(60, 30, 90, 0.6);
+    grid-column: 1 / -1;
+    max-width: 100%;
+    min-height: 140px;
+}
+
+.persona-card-custom::before {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%);
+}
+
+.persona-card-custom:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5), 0 0 0 2px #c084fc;
+    border-color: #c084fc;
+}
+
+.persona-card-custom.selected {
+    border-color: #c084fc;
+    box-shadow: 0 0 0 3px rgba(192, 132, 252, 0.4), 0 8px 25px rgba(0, 0, 0, 0.5);
+    background: rgba(80, 40, 120, 0.8);
+}
+
+.persona-card-custom.selected::before {
+    background: linear-gradient(135deg, rgba(192, 132, 252, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%);
+}
+
+.persona-emoji {
+    font-size: 3rem;
+    margin-bottom: 12px;
+    display: inline-block;
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+    transition: all 0.3s ease;
+}
+
+.persona-card:hover .persona-emoji {
+    transform: scale(1.1);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+.persona-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.persona-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.85);
+    font-style: italic;
+    line-height: 1.4;
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    max-width: 220px;
+}
+
+/* Enhanced Emoji Animations */
+.persona-card .wobble-animation {
+    animation: enhancedWobble 2s ease-in-out infinite;
+}
+
+.persona-card .drunk-animation {
+    animation: enhancedDrunkWobble 3s ease-in-out infinite;
+}
+
+.persona-card .zesty-animation {
+    animation: enhancedZestyFlicker 1.5s ease-in-out infinite;
+}
+
+.persona-card .tuff-animation:hover {
+    animation: enhancedTuffShake 0.5s ease-in-out;
+}
+
+.persona-card .stupid-animation {
+    animation: enhancedStupidPulse 2.5s ease-in-out infinite;
+}
+
+.persona-card .cat-animation {
+    animation: enhancedCatWiggle 2s ease-in-out infinite;
+}
+
+.persona-card .custom-animation {
+    animation: enhancedCustomGlow 4s ease-in-out infinite;
+}
+
+@keyframes enhancedWobble {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(-5deg) scale(1.05); }
+    75% { transform: rotate(5deg) scale(1.05); }
+}
+
+@keyframes enhancedDrunkWobble {
+    0%, 100% { transform: rotate(0deg) scale(1); opacity: 1; }
+    25% { transform: rotate(-8deg) scale(0.95); opacity: 0.8; }
+    50% { transform: rotate(0deg) scale(1.1); opacity: 0.9; }
+    75% { transform: rotate(8deg) scale(0.95); opacity: 0.8; }
+}
+
+@keyframes enhancedZestyFlicker {
+    0%, 100% { transform: scale(1); filter: brightness(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)); }
+    50% { transform: scale(1.15); filter: brightness(1.3) hue-rotate(10deg) drop-shadow(0 4px 8px rgba(255, 100, 0, 0.4)); }
+}
+
+@keyframes enhancedTuffShake {
+    0%, 100% { transform: translateX(0) scale(1); }
+    25% { transform: translateX(-3px) scale(1.05); }
+    75% { transform: translateX(3px) scale(1.05); }
+}
+
+@keyframes enhancedStupidPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.9; filter: brightness(1.2); }
+}
+
+@keyframes enhancedCatWiggle {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    25% { transform: rotate(-3deg) translateY(-2px) scale(1.05); }
+    75% { transform: rotate(3deg) translateY(-2px) scale(1.05); }
+}
+
+@keyframes enhancedCustomGlow {
+    0%, 100% { 
+        transform: scale(1) rotate(0deg); 
+        filter: brightness(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)); 
+    }
+    50% { 
+        transform: scale(1.1) rotate(180deg); 
+        filter: brightness(1.3) drop-shadow(0 4px 8px rgba(168, 85, 247, 0.4)); 
+    }
+}
+
+/* Emoji Animations */
+@keyframes wobble {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-5deg); }
+    75% { transform: rotate(5deg); }
+}
+
+@keyframes drunkWobble {
+    0%, 100% { transform: rotate(0deg) scale(1); opacity: 1; }
+    25% { transform: rotate(-8deg) scale(0.95); opacity: 0.8; }
+    50% { transform: rotate(0deg) scale(1.05); opacity: 0.9; }
+    75% { transform: rotate(8deg) scale(0.95); opacity: 0.8; }
+}
+
+@keyframes zestyFlicker {
+    0%, 100% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.1); filter: brightness(1.3) hue-rotate(10deg); }
+}
+
+@keyframes tuffShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+}
+
+@keyframes stupidPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+}
+
+@keyframes catWiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-3deg) translateY(-1px); }
+    75% { transform: rotate(3deg) translateY(-1px); }
+}
+
+@keyframes customGlow {
+    0%, 100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+    50% { transform: scale(1.1) rotate(180deg); filter: brightness(1.2); }
+}
+
+/* Apply animations to specific emojis */
+.wobble-animation {
+    animation: wobble 2s ease-in-out infinite;
+}
+
+.drunk-animation {
+    animation: drunkWobble 3s ease-in-out infinite;
+}
+
+.zesty-animation {
+    animation: zestyFlicker 1.5s ease-in-out infinite;
+}
+
+.tuff-animation:hover {
+    animation: tuffShake 0.5s ease-in-out;
+}
+
+.stupid-animation {
+    animation: stupidPulse 2.5s ease-in-out infinite;
+}
+
+.cat-animation {
+    animation: catWiggle 2s ease-in-out infinite;
+}
+
+.custom-animation {
+    animation: customGlow 4s ease-in-out infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .persona-card {
+        padding: 20px;
+    }
+    
+    .persona-emoji {
+        font-size: 2.5rem;
+    }
+    
+    .persona-title {
+        font-size: 1.125rem;
+    }
+    
+    .persona-subtitle {
+        font-size: 0.8rem;
+    }
+}
+</style>
+</head>
+<body class="font-inter bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-6xl mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <!-- Logo -->
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-4xl font-sora font-bold text-gray-900 dark:text-white">
+                        📚 Clearify
+                    </h1>
+                </div>
+
+                <!-- Right Side -->
+                <div class="flex items-center space-x-3">
+                    <!-- Navigation Links -->
+                    <nav class="hidden md:flex items-center space-x-6">
+                        <a href="#" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">Home</a>
+                        <a href="#pricing" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors">Pricing</a>
+                    </nav>
+
+                    <!-- Theme Toggle -->
+                    <button id="themeToggle" class="p-2 rounded-xl bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <i class="fas fa-moon dark:hidden text-gray-600"></i>
+                        <i class="fas fa-sun hidden dark:block text-yellow-400"></i>
+                    </button>
+
+                    <!-- Auth Elements -->
+                    <div id="authButtons" class="flex items-center space-x-2">
+                        <button id="loginBtn" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-4 py-2 rounded-lg transition-colors">
+                            Log In
+                        </button>
+                        <button id="signupBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            Sign Up
+                        </button>
+                    </div>
+
+                    <!-- User Menu -->
+                    <div id="userMenu" class="hidden relative">
+                        <button id="userMenuBtn" class="flex items-center space-x-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-2 rounded-lg transition-colors">
+                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                <span id="userInitial">U</span>
+                            </div>
+                            <div class="text-left hidden sm:block">
+                                <div class="flex items-center space-x-1">
+                                    <span id="userName" class="text-sm font-medium text-gray-900 dark:text-white">User</span>
+                                    <span id="proBadge" class="hidden bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">PRO</span>
+                                </div>
+                            </div>
+                            <i class="fas fa-chevron-down text-gray-500 text-xs"></i>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="userDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 z-50">
+                            <div class="py-2">
+                                <button id="manageBillingBtn" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <i class="fas fa-credit-card mr-2"></i>
+                                    Manage Billing
+                                </button>
+                                <button id="signOutBtn" class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>
+                                    Sign Out
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Usage Counter -->
+                    <div id="usageCounter" class="hidden bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm font-medium">
+                        <span id="usageText">5/5 today</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Description -->
+        <div class="text-center mb-8 animate-fadeInUp">
+            <h2 class="text-4xl font-sora font-bold text-gray-900 dark:text-white mb-4" style="letter-spacing: 0.5px;">
+                🧠 Understand Complex Text Better
+            </h2>
+            <p class="text-lg font-inter text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                Rewrite complex text in a way that makes sense to YOU. Choose how you want to understand it and let AI help you learn!
+            </p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6 custom-select animate-fadeInUp hover-lift smooth-transition">
+            <div class="flex justify-between items-center mb-3">
+                <label for="textInput" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    📝 Your Text
+                </label>
+                <span id="wordCount" class="text-sm text-gray-500 dark:text-gray-400">
+                    0 / 700 words
+                </span>
+            </div>
+            <textarea 
+                id="textInput" 
+                placeholder="Paste your text here..."
+                class="w-full h-40 p-4 border border-gray-300 dark:border-gray-600 rounded-xl resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+            ></textarea>
+        </div>
+
+        <!-- Explanation Type Selector -->
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 mb-6 animate-fadeInUp hover-lift smooth-transition">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">
+                🎯 Choose explanation type:
+            </label>
+            
+            <div class="flex space-x-4 mb-6">
+                <button id="difficultyModeBtn" class="flex-1 p-3 border-2 border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-xl font-medium transition-colors">
+                    📊 Explain by Difficulty
+                </button>
+                <button id="characterModeBtn" class="flex-1 p-3 border-2 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl font-medium transition-colors">
+                    👥 Explain by Character
+                </button>
+            </div>
+
+            <!-- Difficulty Mode -->
+            <div id="difficultyMode" class="space-y-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Explanation Level:
+                </label>
+                <div class="relative px-2">
+                    <!-- Custom Slider -->
+                    <div class="relative">
+                        <!-- Slider Track with Segments -->
+                        <div class="w-full h-3 bg-gradient-to-r from-green-500 via-yellow-500 via-blue-500 via-orange-500 to-red-500 dark:from-green-600 dark:via-yellow-600 dark:via-blue-600 dark:via-orange-600 dark:to-red-600 rounded-full relative">
+                            <!-- Difficulty Position Markers - Perfectly centered with slider thumb -->
+                            <div class="absolute -top-1 w-1 h-5 bg-white dark:bg-gray-300 rounded-full shadow-sm" style="left: calc(1% - 0.5px);"></div>
+                            <div class="absolute -top-1 w-1 h-5 bg-white dark:bg-gray-300 rounded-full shadow-sm" style="left: calc(25% - 0.5px);"></div>
+                            <div class="absolute -top-1 w-1 h-5 bg-white dark:bg-gray-300 rounded-full shadow-sm" style="left: calc(50% - 0.5px);"></div>
+                            <div class="absolute -top-1 w-1 h-5 bg-white dark:bg-gray-300 rounded-full shadow-sm" style="left: calc(74% - 0.5px);"></div>
+                            <div class="absolute -top-1 w-1 h-5 bg-white dark:bg-gray-300 rounded-full shadow-sm" style="left: calc(99% - 0.5px);"></div>
+                        </div>
+                        
+                        <!-- Slider Input -->
+                        <input type="range" id="difficultySlider" min="1" max="5" value="3" 
+                               class="absolute top-0 left-0 w-full h-3 appearance-none cursor-pointer bg-transparent slider-custom">
+                        
+                        <!-- Moving Label -->
+                        <div class="absolute -top-8 transition-all duration-300 pointer-events-none" id="movingLabel" style="left: 50%; transform: translateX(-50%);">
+                            <div class="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2 py-1 rounded-full text-xs font-medium shadow-lg">
+                                <span id="difficultyText">Medium Detail</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fixed Labels at Bottom -->
+                    <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-4 px-1">
+                        <span class="text-center w-1/5">Very Simple</span>
+                        <span class="text-center w-1/5"></span>
+                        <span class="text-center w-1/5"></span>
+                        <span class="text-center w-1/5"></span>
+                        <span class="text-center w-1/5">Very Detailed</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Character Mode -->
+            <div id="characterMode" class="hidden space-y-6">
+                <!-- Persona Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 5 Years Old Card -->
+                    <div class="persona-card" data-persona="I'm 5 years old">
+                        <div class="persona-emoji wobble-animation">🧒</div>
+                        <h3 class="persona-title">5 Years Old</h3>
+                        <p class="persona-subtitle">"Explain like I'm 5 and love dinosaurs!"</p>
+                    </div>
+                    
+                    <!-- Drunk Card -->
+                    <div class="persona-card" data-persona="I'm drunk">
+                        <div class="persona-emoji drunk-animation">🥴</div>
+                        <h3 class="persona-title">I'm Drunk</h3>
+                        <p class="persona-subtitle">"What's this even mean? Say it sloooow..."</p>
+                    </div>
+                    
+                    <!-- Zesty Card -->
+                    <div class="persona-card" data-persona="I'm feeling zesty">
+                        <div class="persona-emoji zesty-animation">🌶️</div>
+                        <h3 class="persona-title">Zesty</h3>
+                        <p class="persona-subtitle">"Zingy, spicy, sharp explanations only!"</p>
+                    </div>
+                    
+                    <!-- Tuff Card -->
+                    <div class="persona-card" data-persona="I'm tuff">
+                        <div class="persona-emoji tuff-animation">💀</div>
+                        <h3 class="persona-title">Tuff</h3>
+                        <p class="persona-subtitle">"Explain like a boss. No fluff."</p>
+                    </div>
+                    
+                    <!-- Stupid Card -->
+                    <div class="persona-card" data-persona="I'm stupid">
+                        <div class="persona-emoji stupid-animation">🧠</div>
+                        <h3 class="persona-title">I'm Stupid</h3>
+                        <p class="persona-subtitle">"Say it again, but like, for a potato."</p>
+                    </div>
+                    
+                    <!-- Cat Lover Card -->
+                    <div class="persona-card" data-persona="I love cats">
+                        <div class="persona-emoji cat-animation">🐱</div>
+                        <h3 class="persona-title">Cat Lover</h3>
+                        <p class="persona-subtitle">"Make it purrrfectly simple!"</p>
+                    </div>
+                </div>
+                
+                <!-- Custom Character Card (Full Width) -->
+                <div class="persona-card persona-card-custom" data-persona="custom">
+                    <div class="persona-emoji custom-animation">❓</div>
+                    <h3 class="persona-title">Create Your Own</h3>
+                    <p class="persona-subtitle">"Mix your style. Get custom explanations."</p>
+                </div>
+                
+                <!-- Custom Persona Input -->
+                <div id="customPersonaDiv" class="mt-4 hidden">
+                    <input 
+                        type="text" 
+                        id="customPersona" 
+                        placeholder="e.g., a medieval knight, a space alien, etc."
+                        class="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors"
+                    >
+                </div>
+            </div>
+        </div>
+
+        <!-- Rewrite Button -->
+        <div class="text-center mb-8 animate-fadeInUp">
+            <button 
+                id="rewriteBtn"
+                class="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white font-sora font-bold py-4 px-8 rounded-2xl shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none animate-pulse-hover explain-btn-glow uppercase text-xl"
+                style="background: linear-gradient(135deg, #6a5acd 0%, #9b59b6 100%); border-radius: 16px; padding: 16px 32px; letter-spacing: 0.5px;"
+            >
+                <span id="btnText">🎯 EXPLAIN!</span>
+                <span id="btnLoading" class="hidden">
+                    <i class="fas fa-spinner fa-spin mr-2"></i>
+                    TRANSLATING...
+                </span>
+            </button>
+        </div>
+
+        <!-- Result Section -->
+        <div id="resultSection" class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+                    ✨ Result
+                </h3>
+                <div class="flex space-x-2">
+                    <button 
+                        id="toggleOriginal"
+                        class="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
+                    >
+                        👁️ Show Original
+                    </button>
+                    <button 
+                        id="copyResult"
+                        class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-lg text-sm font-medium transition-colors"
+                    >
+                        📋 Copy
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Original Text (Hidden by default) -->
+            <div id="originalText" class="bg-gray-50 dark:bg-gray-700 rounded-xl p-4 mb-4 hidden">
+                <h4 class="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">Original:</h4>
+                <p id="originalContent" class="text-gray-800 dark:text-gray-200 whitespace-pre-wrap"></p>
+            </div>
+            
+            <!-- AI Result -->
+            <div class="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl p-4 max-h-96 overflow-y-auto">
+                <p id="resultContent" class="text-gray-800 dark:text-gray-200 whitespace-pre-wrap leading-relaxed"></p>
+            </div>
+        </div>
+
+        <!-- Copy Success Message -->
+        <div id="copySuccess" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-full opacity-0 transition-all duration-300">
+            ✅ Copied to clipboard!
+        </div>
+
+        <!-- Auth Messages -->
+        <div id="loginRequired" class="hidden bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-2xl p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900/50 rounded-full flex items-center justify-center">
+                        <i class="fas fa-lock text-yellow-600 dark:text-yellow-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-yellow-800 dark:text-yellow-200">Login Required</h3>
+                        <p class="text-yellow-700 dark:text-yellow-300 text-sm">Please sign up or log in to start rewriting text with AI.</p>
+                    </div>
+                </div>
+                <button id="loginRequiredBtn" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    Sign Up Free
+                </button>
+            </div>
+        </div>
+
+        <div id="usageLimitReached" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 bg-red-100 dark:bg-red-900/50 rounded-full flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold text-red-800 dark:text-red-200">Daily Limit Reached</h3>
+                        <p class="text-red-700 dark:text-red-300 text-sm">You've used all 5 free rewrites today. Upgrade to Pro for unlimited access!</p>
+                    </div>
+                </div>
+                <button id="upgradeBtn" class="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    Upgrade to Pro
+                </button>
+            </div>
+        </div>
+
+        <!-- Pricing Section -->
+        <section id="pricing" class="py-16 bg-gray-50 dark:bg-gray-800/50 rounded-3xl mt-16">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-sora font-bold text-gray-900 dark:text-white mb-4" style="letter-spacing: 0.5px;">
+                    💎 Choose Your Plan
+                </h2>
+                <p class="text-lg font-inter text-gray-600 dark:text-gray-300">
+                    Start free, upgrade when you need more
+                </p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <!-- Free Plan -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+                    <div class="text-center mb-6">
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Free</h3>
+                        <div class="text-4xl font-bold text-gray-900 dark:text-white mb-2">$0</div>
+                        <p class="text-gray-600 dark:text-gray-400">Perfect for trying out ELIX</p>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700 dark:text-gray-300">5 rewrites per day</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700 dark:text-gray-300">All persona options</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            <span class="text-gray-700 dark:text-gray-300">700 word limit</span>
+                        </li>
+                    </ul>
+                    <button class="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-3 rounded-lg font-medium transition-colors">
+                        Current Plan
+                    </button>
+                </div>
+
+                <!-- Pro Plan -->
+                <div class="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden">
+                    <div class="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold">
+                        POPULAR
+                    </div>
+                    <div class="text-center mb-6">
+                        <h3 class="text-2xl font-bold mb-2">ELIX Pro</h3>
+                        <div class="text-4xl font-bold mb-2">$3<span class="text-lg">/month</span></div>
+                        <p class="text-blue-100">Unlimited AI rewrites</p>
+                    </div>
+                    <ul class="space-y-3 mb-8">
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-300 mr-3"></i>
+                            <span>Unlimited daily rewrites</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-300 mr-3"></i>
+                            <span>All persona options</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-300 mr-3"></i>
+                            <span>700 word limit</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-check text-green-300 mr-3"></i>
+                            <span>Priority support</span>
+                        </li>
+                    </ul>
+                    <button id="upgradeToProBtn" class="w-full bg-white text-blue-600 py-3 rounded-lg font-bold hover:bg-gray-100 transition-colors">
+                        Upgrade to Pro
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-8 text-gray-500 dark:text-gray-400">
+        <p>Made with ❤️ for better communication</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
