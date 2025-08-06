@@ -777,23 +777,30 @@ body.light-theme .persona-card-custom.selected {
         margin-top: 0.5rem;
     }
     
-    /* Explain button - sticky, slim, full width */
+    /* Explain button - positioned under explanation type section */
     #rewriteBtn {
-        position: fixed;
-        bottom: 0.75rem;
-        left: 0.75rem;
-        right: 0.75rem;
-        z-index: 50;
+        position: static;
+        width: 100%;
         margin: 0;
         padding: 0.75rem 1rem;
         height: 44px;
         font-size: 16px;
         font-weight: bold;
-        border-radius: 0.5rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 15px rgba(106, 90, 205, 0.3);
         display: flex;
         align-items: center;
         justify-content: center;
+        transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    
+    #rewriteBtn:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 6px 20px rgba(106, 90, 205, 0.4);
+    }
+    
+    #rewriteBtn.explain-btn-active {
+        animation: gentlePulse 2s ease-in-out infinite;
     }
     
     /* Result section - compact */
@@ -982,7 +989,7 @@ body.light-theme .persona-card-custom.selected {
             <div class="flex justify-between items-center">
                 <!-- Logo -->
                 <div class="flex items-center space-x-4">
-                    <h1 class="text-4xl font-sora font-bold text-gray-900 dark:text-white">
+                    <h1 class="text-4xl font-sora font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent hover:scale-105 transition-transform duration-300 cursor-pointer" style="text-shadow: 0 0 30px rgba(99, 102, 241, 0.3);">
                         📚 Clearify
                     </h1>
                 </div>
@@ -1003,10 +1010,10 @@ body.light-theme .persona-card-custom.selected {
 
                     <!-- Auth Elements -->
                     <div id="authButtons" class="flex items-center space-x-2">
-                        <button id="loginBtn" class="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white px-4 py-2 rounded-lg transition-colors">
+                        <button id="loginBtn" class="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 text-gray-700 dark:text-gray-200 hover:from-gray-200 hover:to-gray-300 dark:hover:from-gray-600 dark:hover:to-gray-500 px-5 py-2.5 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md">
                             Log In
                         </button>
-                        <button id="signupBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        <button id="signupBtn" class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-5 py-2.5 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
                             Sign Up
                         </button>
                     </div>
@@ -1290,78 +1297,6 @@ body.light-theme .persona-card-custom.selected {
             </div>
         </div>
 
-        <!-- Pricing Section -->
-        <section id="pricing" class="py-16 bg-gray-50 dark:bg-gray-800/50 rounded-3xl mt-16">
-            <div class="text-center mb-12">
-                <h2 class="text-4xl font-sora font-bold text-gray-900 dark:text-white mb-4" style="letter-spacing: 0.5px;">
-                    💎 Choose Your Plan
-                </h2>
-                <p class="text-lg font-inter text-gray-600 dark:text-gray-300">
-                    Start free, upgrade when you need more
-                </p>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                <!-- Free Plan -->
-                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
-                    <div class="text-center mb-6">
-                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Free</h3>
-                        <div class="text-4xl font-bold text-gray-900 dark:text-white mb-2">$0</div>
-                        <p class="text-gray-600 dark:text-gray-400">Perfect for trying out ELIX</p>
-                    </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-center">
-                            <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span class="text-gray-700 dark:text-gray-300">5 rewrites per day</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span class="text-gray-700 dark:text-gray-300">All persona options</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-check text-green-500 mr-3"></i>
-                            <span class="text-gray-700 dark:text-gray-300">700 word limit</span>
-                        </li>
-                    </ul>
-                    <button class="w-full bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 py-3 rounded-lg font-medium transition-colors">
-                        Current Plan
-                    </button>
-                </div>
-
-                <!-- Pro Plan -->
-                <div class="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden">
-                    <div class="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold">
-                        POPULAR
-                    </div>
-                    <div class="text-center mb-6">
-                        <h3 class="text-2xl font-bold mb-2">ELIX Pro</h3>
-                        <div class="text-4xl font-bold mb-2">$3<span class="text-lg">/month</span></div>
-                        <p class="text-blue-100">Unlimited AI rewrites</p>
-                    </div>
-                    <ul class="space-y-3 mb-8">
-                        <li class="flex items-center">
-                            <i class="fas fa-check text-green-300 mr-3"></i>
-                            <span>Unlimited daily rewrites</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-check text-green-300 mr-3"></i>
-                            <span>All persona options</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-check text-green-300 mr-3"></i>
-                            <span>700 word limit</span>
-                        </li>
-                        <li class="flex items-center">
-                            <i class="fas fa-check text-green-300 mr-3"></i>
-                            <span>Priority support</span>
-                        </li>
-                    </ul>
-                    <button id="upgradeToProBtn" class="w-full bg-white text-blue-600 py-3 rounded-lg font-bold hover:bg-gray-100 transition-colors">
-                        Upgrade to Pro
-                    </button>
-                </div>
-            </div>
-        </section>
 
     </main>
 
