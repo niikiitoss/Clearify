@@ -1,27 +1,19 @@
 // Configuration file for ELIX
-// Uses environment variables for security
+// Static configuration with fallback values
 
 const CONFIG = {
-    // Supabase Configuration - Use environment variables or fallback to placeholders
-    SUPABASE_URL: import.meta.env?.VITE_SUPABASE_URL || 
-                  process.env?.VITE_SUPABASE_URL || 
-                  window?.ENV?.VITE_SUPABASE_URL ||
+    // Supabase Configuration
+    SUPABASE_URL: window?.ENV?.VITE_SUPABASE_URL ||
                   'https://hakljxesjfvqwyjcshef.supabase.co',
                   
-    SUPABASE_ANON_KEY: import.meta.env?.VITE_SUPABASE_ANON_KEY || 
-                       process.env?.VITE_SUPABASE_ANON_KEY || 
-                       window?.ENV?.VITE_SUPABASE_ANON_KEY ||
+    SUPABASE_ANON_KEY: window?.ENV?.VITE_SUPABASE_ANON_KEY ||
                        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhha2xqeGVzamZ2cXd5amNzaGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM0NjI4NTIsImV4cCI6MjA2OTAzODg1Mn0.lorVx51L7LzeRsJNTlKWBnhgDLfcPscx2b3JpqG8ewg',
     
-    // Stripe Configuration - Use environment variables or fallback to placeholders
-    STRIPE_PUBLISHABLE_KEY: import.meta.env?.VITE_STRIPE_PUBLISHABLE_KEY || 
-                           process.env?.VITE_STRIPE_PUBLISHABLE_KEY || 
-                           window?.ENV?.VITE_STRIPE_PUBLISHABLE_KEY ||
+    // Stripe Configuration
+    STRIPE_PUBLISHABLE_KEY: window?.ENV?.VITE_STRIPE_PUBLISHABLE_KEY ||
                            'pk_test_51RoqCVD84Dop7c0GcolWXCjaKJTTUopKf6vwGW9K0OGicXot71MpM6pAUNQs60tfqzrS7Fhr93hIWRvXLW5QBwcL000mmyXQYZ',
                            
-    STRIPE_PRICE_ID: import.meta.env?.VITE_STRIPE_PRICE_ID || 
-                     process.env?.VITE_STRIPE_PRICE_ID || 
-                     window?.ENV?.VITE_STRIPE_PRICE_ID ||
+    STRIPE_PRICE_ID: window?.ENV?.VITE_STRIPE_PRICE_ID ||
                      'price_1RpEH8D84Dop7c0GhaSu7b7U',
     
     // OpenAI Configuration - Now handled by serverless function
