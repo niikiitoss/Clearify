@@ -892,25 +892,58 @@ function setupEventListeners() {
     }
 }
 
-// Theme Management
+// Enhanced Theme Management with Light Theme Support
 function initializeTheme() {
     const savedTheme = localStorage.getItem('theme');
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+    // Default to dark theme (current design)
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-theme');
+        document.documentElement.classList.remove('dark');
+    } else if (savedTheme === 'dark' || !savedTheme) {
+        document.body.classList.remove('light-theme');
         document.documentElement.classList.add('dark');
     }
+    
+    updateThemeIcon();
 }
 
 function toggleTheme() {
-    const isDark = document.documentElement.classList.contains('dark');
+    const isLightTheme = document.body.classList.contains('light-theme');
     
-    if (isDark) {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-    } else {
+    if (isLightTheme) {
+        // Switch to dark theme
+        document.body.classList.remove('light-theme');
         document.documentElement.classList.add('dark');
         localStorage.setItem('theme', 'dark');
+    } else {
+        // Switch to light theme
+        document.body.classList.add('light-theme');
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+    }
+    
+    updateThemeIcon();
+}
+
+function updateThemeIcon() {
+    const themeToggle = document.getElementById('themeToggle');
+    const isLightTheme = document.body.classList.contains('light-theme');
+    
+    if (themeToggle) {
+        const moonIcon = themeToggle.querySelector('.fa-moon');
+        const sunIcon = themeToggle.querySelector('.fa-sun');
+        
+        if (isLightTheme) {
+            // Show moon icon (switch to dark)
+            if (moonIcon) moonIcon.classList.remove('hidden');
+            if (sunIcon) sunIcon.classList.add('hidden');
+        } else {
+            // Show sun icon (switch to light)
+            if (moonIcon) moonIcon.classList.add('hidden');
+            if (sunIcon) sunIcon.classList.remove('hidden');
+        }
     }
 }
 
