@@ -602,6 +602,15 @@ function setupEventListeners() {
         themeToggle.addEventListener('click', toggleTheme);
     }
     
+    // Pricing modal
+    const pricingLink = document.querySelector('a[href="#pricing"]');
+    if (pricingLink) {
+        pricingLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            showPricingModal();
+        });
+    }
+    
     // Auth buttons
     if (loginBtn) loginBtn.addEventListener('click', signIn);
     if (signupBtn) signupBtn.addEventListener('click', signUp);
@@ -1607,6 +1616,149 @@ async function handleStripeSuccess() {
         console.error('Failed to update Pro status:', error);
         showNotification('Payment successful! Please refresh the page to see your Pro features.', 'success');
     }
+}
+
+// Pricing Modal Functions
+function showPricingModal() {
+    const modalId = 'pricingModal';
+    let modal = document.getElementById(modalId);
+    
+    if (!modal) {
+        modal = createPricingModal();
+        document.body.appendChild(modal);
+    }
+    
+    // Show modal with animation
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.classList.remove('opacity-0');
+        modal.querySelector('.modal-content').classList.remove('scale-95', 'translate-y-4');
+        modal.querySelector('.modal-content').classList.add('scale-100', 'translate-y-0');
+    }, 10);
+}
+
+function hidePricingModal() {
+    const modal = document.getElementById('pricingModal');
+    if (!modal) return;
+    
+    modal.classList.add('opacity-0');
+    modal.querySelector('.modal-content').classList.remove('scale-100', 'translate-y-0');
+    modal.querySelector('.modal-content').classList.add('scale-95', 'translate-y-4');
+    
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
+}
+
+function createPricingModal() {
+    const modal = document.createElement('div');
+    modal.id = 'pricingModal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300';
+    
+    const isMobile = window.innerWidth <= 768;
+    
+    modal.innerHTML = `
+        <div class="modal-content bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto transform scale-95 translate-y-4 transition-all duration-300 ${isMobile ? 'mx-2' : ''}">
+            <!-- Header -->
+            <div class="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
+                <div>
+                    <h2 class="text-3xl font-sora font-bold text-gray-900 dark:text-white">💎 Choose Your Plan</h2>
+                    <p class="text-gray-600 dark:text-gray-300 mt-1">Start free, upgrade when you need more</p>
+                </div>
+                <button id="closePricingModal" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    <i class="fas fa-times text-gray-500 dark:text-gray-400 text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- Pricing Plans -->
+            <div class="p-6">
+                <div class="grid ${isMobile ? 'grid-cols-1' : 'md:grid-cols-2'} gap-6">
+                    <!-- Free Plan -->
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-2xl p-6 border border-gray-200 dark:border-gray-600">
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Free</h3>
+                            <div class="text-4xl font-bold text-gray-900 dark:text-white mb-2">$0</div>
+                            <p class="text-gray-600 dark:text-gray-400">Perfect for trying out Clearify</p>
+                        </div>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-3"></i>
+                                <span class="text-gray-700 dark:text-gray-300">5 rewrites per day</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-3"></i>
+                                <span class="text-gray-700 dark:text-gray-300">All persona options</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-3"></i>
+                                <span class="text-gray-700 dark:text-gray-300">700 word limit</span>
+                            </li>
+                        </ul>
+                        <button class="w-full bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 py-3 rounded-lg font-medium transition-colors cursor-not-allowed">
+                            Current Plan
+                        </button>
+                    </div>
+
+                    <!-- Pro Plan -->
+                    <div class="bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl p-6 text-white relative overflow-hidden">
+                        <div class="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold">
+                            POPULAR
+                        </div>
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-bold mb-2">Clearify Pro</h3>
+                            <div class="text-4xl font-bold mb-2">$3<span class="text-lg">/month</span></div>
+                            <p class="text-blue-100">Unlimited AI rewrites</p>
+                        </div>
+                        <ul class="space-y-3 mb-8">
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-300 mr-3"></i>
+                                <span>Unlimited daily rewrites</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-300 mr-3"></i>
+                                <span>All persona options</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-300 mr-3"></i>
+                                <span>700 word limit</span>
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-300 mr-3"></i>
+                                <span>Priority support</span>
+                            </li>
+                        </ul>
+                        <button id="modalUpgradeBtn" class="w-full bg-white text-blue-600 py-3 rounded-lg font-bold hover:bg-gray-100 transition-colors">
+                            Upgrade to Pro
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add event listeners
+    const closeBtn = modal.querySelector('#closePricingModal');
+    const upgradeBtn = modal.querySelector('#modalUpgradeBtn');
+    
+    closeBtn.addEventListener('click', hidePricingModal);
+    upgradeBtn.addEventListener('click', () => {
+        hidePricingModal();
+        upgradeToProStripe();
+    });
+    
+    // Close on backdrop click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            hidePricingModal();
+        }
+    });
+    
+    // Handle mobile slide-up animation
+    if (isMobile) {
+        modal.querySelector('.modal-content').classList.add('slide-up-mobile');
+    }
+    
+    return modal;
 }
 
 function showNotification(message, type = 'info') {
