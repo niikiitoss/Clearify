@@ -744,7 +744,7 @@ function setupEventListeners() {
         updateSlider();
     }
     
-    // Enhanced Persona card selection with better state management
+    // Enhanced Persona card selection with mobile tap-to-expand
     function setupPersonaCards() {
         const characterMode = document.getElementById('characterMode');
         
@@ -756,16 +756,52 @@ function setupEventListeners() {
                 
                 console.log('🎭 Persona card clicked:', clickedCard.dataset.persona);
                 
-                // Remove selected class from all cards
-                const allCards = characterMode.querySelectorAll('.persona-card');
-                allCards.forEach(card => {
-                    card.classList.remove('selected');
-                    console.log('Removed selected from:', card.dataset.persona);
-                });
+                // Check if we're on mobile (screen width <= 768px)
+                const isMobile = window.innerWidth <= 768;
                 
-                // Add selected class to clicked card
-                clickedCard.classList.add('selected');
-                console.log('✅ Added selected to:', clickedCard.dataset.persona);
+                if (isMobile) {
+                    // Mobile: Handle tap-to-expand functionality
+                    const isExpanded = clickedCard.classList.contains('mobile-expanded');
+                    
+                    if (isExpanded) {
+                        // If already expanded, collapse and select
+                        clickedCard.classList.remove('mobile-expanded');
+                        
+                        // Remove selected from all cards
+                        const allCards = characterMode.querySelectorAll('.persona-card');
+                        allCards.forEach(card => {
+                            card.classList.remove('selected');
+                        });
+                        
+                        // Add selected to clicked card
+                        clickedCard.classList.add('selected');
+                        console.log('📱 Mobile: Collapsed and selected:', clickedCard.dataset.persona);
+                    } else {
+                        // If not expanded, expand it (don't select yet)
+                        // First collapse all other cards
+                        const allCards = characterMode.querySelectorAll('.persona-card');
+                        allCards.forEach(card => {
+                            card.classList.remove('mobile-expanded');
+                        });
+                        
+                        // Expand clicked card
+                        clickedCard.classList.add('mobile-expanded');
+                        console.log('📱 Mobile: Expanded card:', clickedCard.dataset.persona);
+                        return; // Don't proceed with selection logic
+                    }
+                } else {
+                    // Desktop: Normal selection behavior
+                    // Remove selected class from all cards
+                    const allCards = characterMode.querySelectorAll('.persona-card');
+                    allCards.forEach(card => {
+                        card.classList.remove('selected');
+                        card.classList.remove('mobile-expanded'); // Clean up mobile classes
+                    });
+                    
+                    // Add selected class to clicked card
+                    clickedCard.classList.add('selected');
+                    console.log('🖥️ Desktop: Selected:', clickedCard.dataset.persona);
+                }
                 
                 // Get the persona value
                 const selectedPersona = clickedCard.dataset.persona;
@@ -786,6 +822,18 @@ function setupEventListeners() {
                 
                 // Update button state if text is present
                 updateButtonState();
+            });
+            
+            // Handle window resize to clean up mobile classes on desktop
+            window.addEventListener('resize', function() {
+                const isMobile = window.innerWidth <= 768;
+                if (!isMobile) {
+                    // Clean up mobile-specific classes when switching to desktop
+                    const allCards = characterMode.querySelectorAll('.persona-card');
+                    allCards.forEach(card => {
+                        card.classList.remove('mobile-expanded');
+                    });
+                }
             });
             
             console.log('✅ Persona card event listeners setup complete');
