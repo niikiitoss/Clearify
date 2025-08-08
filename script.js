@@ -95,6 +95,40 @@ async function initializeServices() {
     try {
         supabase = window.supabase.createClient(window.CONFIG.SUPABASE_URL, window.CONFIG.SUPABASE_ANON_KEY);
         
+        // CRITICAL: Set up auth state listener IMMEDIATELY after client creation
+        // This ensures we catch OAuth redirects before any other operations
+        console.log('Setting up auth state listener...');
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log('🔄 Auth state changed:', event, session?.user?.email || 'no user');
+            
+            if (event === 'SIGNED_IN' || (event === 'TOKEN_REFRESHED' && session)) {
+                console.log('✅ User signed in via OAuth redirect or token refresh');
+                currentUser = session.user;
+                
+                // Clean URL fragment after successful OAuth processing
+                if (window.location.hash.includes('access_token')) {
+                    console.log('🧹 Cleaning OAuth tokens from URL');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+                
+                await loadUserProfile();
+                showAuthenticatedState();
+                showNotification('Welcome back! You\'re now signed in.', 'success');
+                hideAuthModal(); // Hide modal if open
+                hideLoginRequiredModal(); // Hide login required modal if open
+                
+                // Execute any pending action after successful login
+                await executePendingAction();
+            } else if (event === 'SIGNED_OUT') {
+                console.log('👋 User signed out');
+                currentUser = null;
+                userProfile = null;
+                userLimits = null;
+                pendingAction = null; // Clear any pending actions on logout
+                showLoginRequired();
+            }
+        });
+        
         if (window.CONFIG.STRIPE_PUBLISHABLE_KEY && window.CONFIG.STRIPE_PUBLISHABLE_KEY !== 'YOUR_STRIPE_PUBLISHABLE_KEY_HERE') {
             stripe = Stripe(window.CONFIG.STRIPE_PUBLISHABLE_KEY);
         }
@@ -949,30 +983,8 @@ function setupEventListeners() {
         }
     });
     
-    // Auth state changes
-    if (supabase) {
-        supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log('Auth state changed:', event, session);
-            if (event === 'SIGNED_IN' || (event === 'TOKEN_REFRESHED' && session)) {
-                console.log('User signed in:', session.user);
-                currentUser = session.user;
-                await loadUserProfile();
-                showAuthenticatedState();
-                showNotification('Signed in successfully!', 'success');
-                hideAuthModal(); // Hide modal if open
-                hideLoginRequiredModal(); // Hide login required modal if open
-                
-                // Execute any pending action after successful login
-                await executePendingAction();
-            } else if (event === 'SIGNED_OUT') {
-                console.log('User signed out');
-                currentUser = null;
-                userProfile = null;
-                pendingAction = null; // Clear any pending actions on logout
-                showLoginRequired();
-            }
-        });
-    }
+    // Auth state listener is now set up in initializeServices() to catch OAuth redirects
+    // No duplicate listener needed here
     
     // Check for Stripe success/cancel
     const urlParams = new URLSearchParams(window.location.search);
