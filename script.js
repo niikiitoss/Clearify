@@ -72,8 +72,40 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Initialize services
         await initializeServices();
         
-        // Check authentication state
-        await checkAuthState();
+        // CRITICAL: Handle OAuth redirect immediately if tokens are present
+        if (window.location.hash.includes('access_token')) {
+            console.log('🚀 OAuth redirect detected on page load, forcing session processing...');
+            
+            // Give Supabase a moment to process the URL fragment
+            setTimeout(async () => {
+                try {
+                    // Force session refresh to process OAuth tokens
+                    const { data: { session }, error } = await supabase.auth.refreshSession();
+                    
+                    if (session && !error) {
+                        console.log('✅ OAuth session processed via refresh:', session.user.email);
+                        currentUser = session.user;
+                        
+                        // Clean URL immediately
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        
+                        await loadUserProfile();
+                        showAuthenticatedState();
+                        showNotification('Welcome back! You\'re now signed in.', 'success');
+                        await executePendingAction();
+                    } else {
+                        console.log('⚠️ Failed to process OAuth session via refresh, falling back to normal check');
+                        await checkAuthState();
+                    }
+                } catch (error) {
+                    console.error('❌ Error processing OAuth redirect:', error);
+                    await checkAuthState();
+                }
+            }, 100);
+        } else {
+            // Normal authentication check
+            await checkAuthState();
+        }
         
         console.log('ELIX initialized successfully');
     } catch (error) {
@@ -195,29 +227,65 @@ async function initializeServices() {
 
 // Check authentication state
 async function checkAuthState() {
-    console.log('Checking authentication state...');
+    console.log('🔍 Checking authentication state...');
     
     if (!supabase) {
-        console.log('Supabase not initialized');
+        console.log('❌ Supabase not initialized');
         showLoginRequired();
         return;
     }
     
     try {
+        // CRITICAL: Check if we have OAuth tokens in URL first
+        const hasOAuthTokens = window.location.hash.includes('access_token');
+        console.log('🔗 OAuth tokens in URL:', hasOAuthTokens);
+        
+        if (hasOAuthTokens) {
+            console.log('🚀 OAuth redirect detected, processing session from URL...');
+            
+            // Force Supabase to process the URL fragment
+            const { data: { session }, error } = await supabase.auth.getSession();
+            
+            if (error) {
+                console.error('❌ Error processing OAuth session:', error);
+                throw error;
+            }
+            
+            if (session) {
+                console.log('✅ OAuth session processed successfully:', session.user.email);
+                currentUser = session.user;
+                
+                // Clean URL immediately after processing
+                console.log('🧹 Cleaning OAuth tokens from URL...');
+                window.history.replaceState({}, document.title, window.location.pathname);
+                
+                await loadUserProfile();
+                showAuthenticatedState();
+                showNotification('Welcome back! You\'re now signed in.', 'success');
+                
+                // Execute any pending actions
+                await executePendingAction();
+                return;
+            } else {
+                console.log('⚠️ OAuth tokens found but no session created');
+            }
+        }
+        
+        // Regular session check for non-OAuth scenarios
         const { data: { session } } = await supabase.auth.getSession();
-        console.log('Session data:', session);
+        console.log('📋 Regular session check:', session?.user?.email || 'no session');
         
         if (session) {
-            console.log('User is authenticated:', session.user);
+            console.log('✅ User is authenticated:', session.user.email);
             currentUser = session.user;
             await loadUserProfile();
             showAuthenticatedState();
         } else {
-            console.log('No active session found');
+            console.log('ℹ️ No active session found');
             showLoginRequired();
         }
     } catch (error) {
-        console.error('Auth check failed:', error);
+        console.error('❌ Auth check failed:', error);
         showLoginRequired();
     }
 }
