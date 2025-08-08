@@ -129,73 +129,92 @@ async function checkAuthState() {
     }
 }
 
-// Load user profile and limits
+// Load user profile and limits - Enhanced with proper profile creation
 async function loadUserProfile() {
     if (!currentUser || !supabase) return;
     
     try {
-        // Load user profile
+        console.log('Loading user profile for user:', currentUser.id);
+        
+        // Check if user profile exists using user_id column
         const { data: profileData, error: profileError } = await supabase
             .from('user_profiles')
             .select('*')
-            .eq('user_id', currentUser.id)
-            .single();
+            .eq('user_id', currentUser.id);
             
-        if (profileError && profileError.code !== 'PGRST116') {
+        if (profileError) {
+            console.error('Error checking user profile:', profileError);
             throw profileError;
         }
         
-        if (!profileData) {
-            // Create new profile
+        // If no profile exists, create one
+        if (!profileData || profileData.length === 0) {
+            console.log('No profile found, creating new profile for user:', currentUser.id);
+            
             const { data: newProfile, error: createProfileError } = await supabase
                 .from('user_profiles')
-                .insert({
-                    user_id: currentUser.id,
-                    email: currentUser.email
-                })
+                .insert([{ 
+                    user_id: currentUser.id, 
+                    email: currentUser.email 
+                }])
                 .select()
                 .single();
                 
-            if (createProfileError) throw createProfileError;
+            if (createProfileError) {
+                console.error('Error creating user profile:', createProfileError);
+                throw createProfileError;
+            }
+            
             userProfile = newProfile;
+            console.log('✅ Created new user profile:', userProfile);
         } else {
-            userProfile = profileData;
+            userProfile = profileData[0];
+            console.log('✅ Loaded existing user profile:', userProfile);
         }
         
-        // Load user limits
+        // Load user limits using user_id column
         const { data: limitsData, error: limitsError } = await supabase
             .from('user_limits')
             .select('*')
-            .eq('user_id', currentUser.id)
-            .single();
+            .eq('user_id', currentUser.id);
             
-        if (limitsError && limitsError.code !== 'PGRST116') {
+        if (limitsError) {
+            console.error('Error checking user limits:', limitsError);
             throw limitsError;
         }
         
-        if (!limitsData) {
-            // Create new limits record
+        // If no limits exist, create them
+        if (!limitsData || limitsData.length === 0) {
+            console.log('No limits found, creating new limits for user:', currentUser.id);
+            
             const { data: newLimits, error: createLimitsError } = await supabase
                 .from('user_limits')
-                .insert({
+                .insert([{
                     user_id: currentUser.id,
                     free_rewrites_today: 0,
                     last_reset: new Date().toISOString().split('T')[0],
                     is_pro: false
-                })
+                }])
                 .select()
                 .single();
                 
-            if (createLimitsError) throw createLimitsError;
-            userLimits = newLimits;
+            if (createLimitsError) {
+                console.error('Error creating user limits:', createLimitsError);
+                throw createLimitsError;
+            }
             
-            showNotification('Welcome to ELIX! You get 5 free rewrites a day.', 'success');
+            userLimits = newLimits;
+            console.log('✅ Created new user limits:', userLimits);
+            showNotification('Welcome to Clearify! You get 5 free rewrites a day.', 'success');
         } else {
-            userLimits = limitsData;
+            userLimits = limitsData[0];
+            console.log('✅ Loaded existing user limits:', userLimits);
             
             // Reset daily count if it's a new day
             const today = new Date().toISOString().split('T')[0];
             if (userLimits.last_reset !== today && !userLimits.is_pro) {
+                console.log('Resetting daily count for new day');
+                
                 const { error: resetError } = await supabase
                     .from('user_limits')
                     .update({
@@ -207,6 +226,7 @@ async function loadUserProfile() {
                 if (!resetError) {
                     userLimits.free_rewrites_today = 0;
                     userLimits.last_reset = today;
+                    console.log('✅ Reset daily count for new day');
                 }
             }
         }
