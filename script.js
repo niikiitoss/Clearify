@@ -59,14 +59,18 @@ let pendingAction = null; // Store the last action that was blocked by login req
 // Initialize Application
 document.addEventListener('DOMContentLoaded', async function() {
     try {
-        // Initialize services
-        await initializeServices();
+        // IMMEDIATELY set login required state to prevent UI flash
+        console.log('Setting initial login required state...');
+        showLoginRequired();
         
         // Initialize theme
         initializeTheme();
         
         // Setup event listeners
         setupEventListeners();
+        
+        // Initialize services
+        await initializeServices();
         
         // Check authentication state
         await checkAuthState();
@@ -75,6 +79,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     } catch (error) {
         console.error('Failed to initialize application:', error);
         showNotification('Failed to initialize application. Please refresh the page.', 'error');
+        // Ensure login required state is shown on error
+        showLoginRequired();
     }
 });
 
@@ -449,18 +455,25 @@ async function manageBilling() {
 
 // Main rewrite function
 async function handleRewrite() {
-    console.log('handleRewrite called');
+    console.log('handleRewrite called, currentUser:', currentUser);
     
-    if (!currentUser) {
+    // ALWAYS check authentication state first - this is the critical fix
+    if (!currentUser || !supabase) {
+        console.log('🚫 User not authenticated, showing login modal');
+        
         // Store the pending action for retry after login
         pendingAction = {
             type: 'rewrite',
             text: textInput.value.trim(),
             persona: getSelectedPersona()
         };
+        
+        // ALWAYS show the login modal for unauthenticated users
         showLoginRequiredModal();
         return;
     }
+    
+    console.log('✅ User is authenticated, proceeding with rewrite');
     
     if (!userLimits.is_pro && userLimits.free_rewrites_today >= window.CONFIG.FREE_DAILY_LIMIT) {
         showUsageLimitReached();
