@@ -187,14 +187,17 @@ async function loadUserProfile() {
         if (!limitsData || limitsData.length === 0) {
             console.log('No limits found, creating new limits for user:', currentUser.id);
             
+            // Use upsert to handle potential duplicates
             const { data: newLimits, error: createLimitsError } = await supabase
                 .from('user_limits')
-                .insert([{
+                .upsert({
                     user_id: currentUser.id,
                     free_rewrites_today: 0,
                     last_reset: new Date().toISOString().split('T')[0],
                     is_pro: false
-                }])
+                }, {
+                    onConflict: 'user_id'
+                })
                 .select()
                 .single();
                 
