@@ -97,35 +97,88 @@ async function initializeServices() {
         
         // CRITICAL: Set up auth state listener IMMEDIATELY after client creation
         // This ensures we catch OAuth redirects before any other operations
-        console.log('Setting up auth state listener...');
+        console.log('🔧 Setting up robust auth state listener...');
         supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log('🔄 Auth state changed:', event, session?.user?.email || 'no user');
+            console.log('🔄 Auth state changed:', {
+                event: event,
+                hasSession: !!session,
+                userEmail: session?.user?.email || 'no user',
+                hasAccessToken: window.location.hash.includes('access_token')
+            });
             
-            if (event === 'SIGNED_IN' || (event === 'TOKEN_REFRESHED' && session)) {
-                console.log('✅ User signed in via OAuth redirect or token refresh');
-                currentUser = session.user;
+            // Handle both SIGNED_IN and INITIAL_SESSION events when session is present
+            if ((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session) {
+                console.log('✅ Processing authentication for event:', event);
+                console.log('📋 Session details:', {
+                    userId: session.user.id,
+                    email: session.user.email,
+                    provider: session.user.app_metadata?.provider
+                });
                 
-                // Clean URL fragment after successful OAuth processing
-                if (window.location.hash.includes('access_token')) {
-                    console.log('🧹 Cleaning OAuth tokens from URL');
-                    window.history.replaceState({}, document.title, window.location.pathname);
+                try {
+                    // Set current user immediately
+                    currentUser = session.user;
+                    console.log('👤 Current user set:', currentUser.email);
+                    
+                    // Clean URL fragment after successful OAuth processing
+                    if (window.location.hash.includes('access_token')) {
+                        console.log('🧹 Cleaning OAuth tokens from URL...');
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        console.log('✅ URL cleaned successfully');
+                    }
+                    
+                    // Load user profile and show authenticated state
+                    console.log('📊 Loading user profile...');
+                    await loadUserProfile();
+                    console.log('✅ User profile loaded successfully');
+                    
+                    console.log('🎨 Updating UI to authenticated state...');
+                    showAuthenticatedState();
+                    console.log('✅ UI updated to authenticated state');
+                    
+                    // Show success notification
+                    showNotification('Welcome back! You\'re now signed in.', 'success');
+                    
+                    // Hide any open modals
+                    hideAuthModal();
+                    hideLoginRequiredModal();
+                    
+                    // Execute any pending action after successful login
+                    console.log('⚡ Executing pending actions...');
+                    await executePendingAction();
+                    console.log('✅ Authentication flow completed successfully');
+                    
+                } catch (error) {
+                    console.error('❌ Error during authentication processing:', error);
+                    console.error('Error details:', {
+                        message: error.message,
+                        stack: error.stack,
+                        event: event,
+                        userId: session?.user?.id
+                    });
+                    
+                    // Show error notification to user
+                    showNotification('Authentication successful, but there was an error loading your profile. Please refresh the page.', 'error');
+                    
+                    // Fallback: still show authenticated state even if profile loading fails
+                    showAuthenticatedState();
                 }
-                
-                await loadUserProfile();
-                showAuthenticatedState();
-                showNotification('Welcome back! You\'re now signed in.', 'success');
-                hideAuthModal(); // Hide modal if open
-                hideLoginRequiredModal(); // Hide login required modal if open
-                
-                // Execute any pending action after successful login
-                await executePendingAction();
             } else if (event === 'SIGNED_OUT') {
                 console.log('👋 User signed out');
+                console.log('🧹 Clearing user data and resetting UI...');
+                
                 currentUser = null;
                 userProfile = null;
                 userLimits = null;
                 pendingAction = null; // Clear any pending actions on logout
+                
                 showLoginRequired();
+                console.log('✅ Signed out successfully');
+            } else if (event === 'TOKEN_REFRESHED' && session) {
+                console.log('🔄 Token refreshed for user:', session.user.email);
+                currentUser = session.user;
+            } else {
+                console.log('ℹ️ Auth event ignored:', event, 'Session present:', !!session);
             }
         });
         
